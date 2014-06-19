@@ -200,8 +200,8 @@ static int wait_for_sr_state(struct mxc_i2c_regs *i2c_regs, unsigned state)
 #else
 			writeb(sr & ~I2SR_IAL, &i2c_regs->i2sr);
 #endif
-			printf("%s: Arbitration lost sr=%x cr=%x state=%x\n",
-				__func__, sr, readb(&i2c_regs->i2cr), state);
+			debug("%s: Arbitration lost sr=%x cr=%x state=%x\n",
+			      __func__, sr, readb(&i2c_regs->i2cr), state);
 			return -ERESTART;
 		}
 		if ((sr & (state >> 8)) == (unsigned char)state)
@@ -211,8 +211,8 @@ static int wait_for_sr_state(struct mxc_i2c_regs *i2c_regs, unsigned state)
 		if (elapsed > (CONFIG_SYS_HZ / 10))	/* .1 seconds */
 			break;
 	}
-	printf("%s: failed sr=%x cr=%x state=%x\n", __func__,
-			sr, readb(&i2c_regs->i2cr), state);
+	debug("%s: failed sr=%x cr=%x state=%x\n", __func__,
+	      sr, readb(&i2c_regs->i2cr), state);
 	return -ETIMEDOUT;
 }
 
@@ -242,7 +242,7 @@ static void i2c_imx_stop(struct mxc_i2c_regs *i2c_regs)
 	writeb(temp, &i2c_regs->i2cr);
 	ret = wait_for_sr_state(i2c_regs, ST_BUS_IDLE);
 	if (ret < 0)
-		printf("%s:trigger stop failed\n", __func__);
+		debug("%s:trigger stop failed\n", __func__);
 }
 
 /*
@@ -312,8 +312,8 @@ static int i2c_init_transfer(struct mxc_i2c_regs *i2c_regs,
 		if (ret == -ENODEV)
 			return ret;
 
-		printf("%s: failed for chip 0x%x retry=%d\n", __func__, chip,
-				retry);
+		debug("%s: failed for chip 0x%x retry=%d\n", __func__, chip,
+		      retry);
 		if (ret != -ERESTART)
 			/* Disable controller */
 			writeb(I2CR_IDIS, &i2c_regs->i2cr);
@@ -321,7 +321,7 @@ static int i2c_init_transfer(struct mxc_i2c_regs *i2c_regs,
 		if (i2c_idle_bus(i2c_regs) < 0)
 			break;
 	}
-	printf("%s: give up i2c_regs=%p\n", __func__, i2c_regs);
+	debug("%s: give up i2c_regs=%p\n", __func__, i2c_regs);
 	return ret;
 }
 
@@ -461,7 +461,7 @@ static struct i2c_parms *i2c_get_parms(void *base)
 		p++;
 		i++;
 	}
-	printf("Invalid I2C base: %p\n", base);
+	debug("Invalid I2C base: %p\n", base);
 	return NULL;
 }
 
