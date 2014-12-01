@@ -87,141 +87,170 @@ static struct mx6sdl_iomux_grp_regs grp_iomux_s = { CM_FX6_GPR_IOMUX_CFG };
 static struct mx6dq_iomux_ddr_regs ddr_iomux_q = { CM_FX6_DDR_IOMUX_CFG };
 static struct mx6dq_iomux_grp_regs grp_iomux_q = { CM_FX6_GPR_IOMUX_CFG };
 
-static struct mx6_mmdc_calibration cm_fx6_calib_s = {
-	.p0_mpwldectrl0	= 0x005B0061,
-	.p0_mpwldectrl1	= 0x004F0055,
-	.p0_mpdgctrl0	= 0x0314030C,
-	.p0_mpdgctrl1	= 0x025C0268,
-	.p0_mprddlctl	= 0x42464646,
-	.p0_mpwrdlctl	= 0x36322C34,
-};
-
-static struct mx6_ddr_sysinfo cm_fx6_sysinfo_s = {
-	.cs1_mirror	= 1,
-	.cs_density	= 16,
-	.bi_on		= 1,
-	.rtt_nom	= 1,
-	.rtt_wr		= 0,
-	.ralat		= 5,
-	.walat		= 1,
-	.mif3_mode	= 3,
-	.rst_to_cke	= 0x23,
-	.sde_to_rst	= 0x10,
-};
-
-static struct mx6_ddr3_cfg cm_fx6_ddr3_cfg_s = {
-	.mem_speed	= 800,
-	.density	= 4,
-	.rowaddr	= 14,
-	.coladdr	= 10,
-	.pagesz		= 2,
-	.trcd		= 1800,
-	.trcmin		= 5200,
-	.trasmin	= 3600,
-	.SRT		= 0,
-};
-
 static void spl_mx6s_dram_init(enum ddr_config dram_config, bool reset)
 {
+	volatile struct mmdc_p_regs *mmdc_p0;
+	volatile struct mmdc_p_regs *mmdc_p1;
+	mmdc_p0 = (struct mmdc_p_regs *)MX6_MMDC_P0_MDCTL;
+	mmdc_p1 = (struct mmdc_p_regs *)MX6_MMDC_P1_MDCTL;
+
 	if (reset)
-		((struct mmdc_p_regs *)MX6_MMDC_P0_MDCTL)->mdmisc = 2;
+		mmdc_p0->mdmisc = 2;
+
+	mmdc_p0->mdscr  = 0x00008000;
+	while (!(mmdc_p0->mdscr & (1 << 14)))
+		;
+
+	mmdc_p0->mpzqhwctrl  = 0xA1390003;
+	/* Wait for ZQ_HW_FOR to finish the calibration on both MMDCs */
+	while (mmdc_p0->mpzqhwctrl & 0x00010000)
+		;
+
+	mmdc_p0->mpwldectrl0 = 0x005B0061;
+	mmdc_p0->mpwldectrl1 = 0x004F0055;
+	mmdc_p0->mpdgctrl0   = 0x0314030C;
+	mmdc_p0->mpdgctrl1   = 0x025C0268;
+	mmdc_p0->mprddlctl   = 0x42464646;
+	mmdc_p0->mpwrdlctl   = 0x36322C34;
+	mmdc_p0->mprddqby0dl = 0x33333333;
+	mmdc_p0->mprddqby1dl = 0x33333333;
+	mmdc_p0->mprddqby2dl = 0x33333333;
+	mmdc_p0->mprddqby3dl = 0x33333333;
+	mmdc_p1->mprddqby0dl = 0x33333333;
+	mmdc_p1->mprddqby1dl = 0x33333333;
+	mmdc_p1->mprddqby2dl = 0x33333333;
+	mmdc_p1->mprddqby3dl = 0x33333333;
+	mmdc_p0->mpmur0	     = 0x00000800;
+	mmdc_p0->mdpdc  = 0x0002002D;
+	mmdc_p0->mdotc  = 0x1B444040;
+	mmdc_p0->mdcfg0 = 0x676B5335;
+	mmdc_p0->mdcfg1 = 0xB68E8F64;
+	mmdc_p0->mdcfg2 = 0x01FF00DB;
+	mmdc_p0->mdmisc = 0x00091740;
+	mmdc_p0->mdrwd  = 0x000026D2;
+	mmdc_p0->mdor   = 0x006B1023;
 
 	switch (dram_config) {
 	case DDR_16BIT_256MB:
-		cm_fx6_sysinfo_s.dsize = 0;
-		cm_fx6_sysinfo_s.ncs = 1;
+		mmdc_p0->mdctl = 0x83180000;
 		break;
 	case DDR_32BIT_512MB:
-		cm_fx6_sysinfo_s.dsize = 1;
-		cm_fx6_sysinfo_s.ncs = 1;
+		mmdc_p0->mdctl = 0x83190000;
 		break;
 	case DDR_32BIT_1GB:
-		cm_fx6_sysinfo_s.dsize = 1;
-		cm_fx6_sysinfo_s.ncs = 2;
+		mmdc_p0->mdctl = 0xC3190000;
 		break;
 	default:
 		puts("Tried to setup invalid DDR configuration\n");
 		hang();
 	}
 
-	mx6_dram_cfg(&cm_fx6_sysinfo_s, &cm_fx6_calib_s, &cm_fx6_ddr3_cfg_s);
+	mmdc_p0->mdscr = 0x00088032;
+	mmdc_p0->mdscr = 0x0008803A;
+	mmdc_p0->mdscr = 0x00008033;
+	mmdc_p0->mdscr = 0x0000803B;
+	mmdc_p0->mdscr = 0x00068031;
+	mmdc_p0->mdscr = 0x00068039;
+	mmdc_p0->mdscr = 0x09408030;
+	mmdc_p0->mdscr = 0x09408038;
+	mmdc_p0->mdscr = 0x04008040;
+	mmdc_p0->mdscr = 0x04008048;
+	mmdc_p0->mdref = 0x00007800;
+	mmdc_p0->mpodtctrl = 0x00022227;
+	mmdc_p0->mdpdc = 0x000255ED;
+	mmdc_p0->mapsr = 0x00001006;
+	mmdc_p0->mdscr = 0x00000000;
 	udelay(100);
 }
 
-static struct mx6_mmdc_calibration cm_fx6_calib_q = {
-	.p0_mpwldectrl0	= 0x00630068,
-	.p0_mpwldectrl1	= 0x0068005D,
-	.p0_mpdgctrl0	= 0x04140428,
-	.p0_mpdgctrl1	= 0x037C037C,
-	.p0_mprddlctl	= 0x3C30303A,
-	.p0_mpwrdlctl	= 0x3A344038,
-	.p1_mpwldectrl0	= 0x0035004C,
-	.p1_mpwldectrl1	= 0x00170026,
-	.p1_mpdgctrl0	= 0x0374037C,
-	.p1_mpdgctrl1	= 0x0350032C,
-	.p1_mprddlctl	= 0x30322A3C,
-	.p1_mpwrdlctl	= 0x48304A3E,
-};
-
-static struct mx6_ddr_sysinfo cm_fx6_sysinfo_q = {
-	.cs_density	= 16,
-	.cs1_mirror	= 1,
-	.bi_on		= 1,
-	.rtt_nom	= 1,
-	.rtt_wr		= 0,
-	.ralat		= 5,
-	.walat		= 1,
-	.mif3_mode	= 3,
-	.rst_to_cke	= 0x23,
-	.sde_to_rst	= 0x10,
-};
-
-static struct mx6_ddr3_cfg cm_fx6_ddr3_cfg_q = {
-	.mem_speed	= 1066,
-	.density	= 4,
-	.rowaddr	= 14,
-	.coladdr	= 10,
-	.pagesz		= 2,
-	.trcd		= 1324,
-	.trcmin		= 59500,
-	.trasmin	= 9750,
-	.SRT		= 0,
-};
-
 static void spl_mx6q_dram_init(enum ddr_config dram_config, bool reset)
 {
-	if (reset)
-		((struct mmdc_p_regs *)MX6_MMDC_P0_MDCTL)->mdmisc = 2;
+	volatile struct mmdc_p_regs *mmdc_p0;
+	volatile struct mmdc_p_regs *mmdc_p1;
+	mmdc_p0 = (struct mmdc_p_regs *)MX6_MMDC_P0_MDCTL;
+	mmdc_p1 = (struct mmdc_p_regs *)MX6_MMDC_P1_MDCTL;
 
-	cm_fx6_ddr3_cfg_q.rowaddr = 14;
+	if (reset)
+		mmdc_p0->mdmisc = 2;
+
+	mmdc_p0->mdscr  = 0x00008000;
+	while (!(mmdc_p0->mdscr & (1 << 14)))
+		;
+
+	mmdc_p0->mpzqhwctrl  = 0xA1390003;
+	/* Wait for ZQ_HW_FOR to finish the calibration on both MMDCs */
+	while (mmdc_p0->mpzqhwctrl & 0x00010000)
+		;
+
+	mmdc_p0->mpwldectrl0 = 0x00630068;
+	mmdc_p0->mpwldectrl1 = 0x0068005D;
+	mmdc_p1->mpwldectrl0 = 0x0035004C;
+	mmdc_p1->mpwldectrl1 = 0x00170026;
+	mmdc_p0->mpdgctrl0   = 0x04140428;
+	mmdc_p0->mpdgctrl1   = 0x037C037C;
+	mmdc_p1->mpdgctrl0   = 0x0374037C;
+	mmdc_p1->mpdgctrl1   = 0x0350032C;
+	mmdc_p0->mprddlctl   = 0x3C30303A;
+	mmdc_p1->mprddlctl   = 0x30322A3C;
+	mmdc_p0->mpwrdlctl   = 0x3A344038;
+	mmdc_p1->mpwrdlctl   = 0x48304A3E;
+	mmdc_p0->mprddqby0dl = 0x33333333;
+	mmdc_p0->mprddqby1dl = 0x33333333;
+	mmdc_p0->mprddqby2dl = 0x33333333;
+	mmdc_p0->mprddqby3dl = 0x33333333;
+	mmdc_p1->mprddqby0dl = 0x33333333;
+	mmdc_p1->mprddqby1dl = 0x33333333;
+	mmdc_p1->mprddqby2dl = 0x33333333;
+	mmdc_p1->mprddqby3dl = 0x33333333;
+	mmdc_p0->mpmur0	     = 0x00000800;
+	mmdc_p1->mpmur0	     = 0x00000800;
+	/* MMDC init: in DDR3, 64-bit mode, only MMDC0 is initiated: */
+	mmdc_p0->mdpdc  = 0x00020036;
+	mmdc_p0->mdotc  = 0x09444040;
+	mmdc_p0->mdcfg0 = 0x8A8F79A5;
+	mmdc_p0->mdcfg1 = 0xFF738F64;
+	mmdc_p0->mdcfg2 = 0x01FF00DD;
+	mmdc_p0->mdmisc = 0x00091740;
+	mmdc_p0->mdrwd  = 0x000026d2;
+	mmdc_p0->mdor   = 0x008F1023;
+
 	switch (dram_config) {
 	case DDR_16BIT_256MB:
-		cm_fx6_sysinfo_q.dsize = 0;
-		cm_fx6_sysinfo_q.ncs = 1;
+		mmdc_p0->mdctl = 0x83180000;
 		break;
 	case DDR_32BIT_512MB:
-		cm_fx6_sysinfo_q.dsize = 1;
-		cm_fx6_sysinfo_q.ncs = 1;
+		mmdc_p0->mdctl = 0x83190000;
 		break;
 	case DDR_64BIT_1GB:
-		cm_fx6_sysinfo_q.dsize = 2;
-		cm_fx6_sysinfo_q.ncs = 1;
+		mmdc_p0->mdctl = 0x831A0000;
 		break;
 	case DDR_64BIT_2GB:
-		cm_fx6_sysinfo_q.dsize = 2;
-		cm_fx6_sysinfo_q.ncs = 2;
+		mmdc_p0->mdctl = 0xC31A0000;
 		break;
 	case DDR_64BIT_4GB:
-		cm_fx6_sysinfo_q.dsize = 2;
-		cm_fx6_sysinfo_q.ncs = 2;
-		cm_fx6_ddr3_cfg_q.rowaddr = 15;
+		mmdc_p0->mdctl = 0xC41A0000;
 		break;
 	default:
 		puts("Tried to setup invalid DDR configuration\n");
 		hang();
 	}
 
-	mx6_dram_cfg(&cm_fx6_sysinfo_q, &cm_fx6_calib_q, &cm_fx6_ddr3_cfg_q);
+	mmdc_p0->mdscr = 0x00088032;
+	mmdc_p0->mdscr = 0x0008803A;
+	mmdc_p0->mdscr = 0x00008033;
+	mmdc_p0->mdscr = 0x0000803B;
+	mmdc_p0->mdscr = 0x00068031;
+	mmdc_p0->mdscr = 0x00068039;
+	mmdc_p0->mdscr = 0x09408030;
+	mmdc_p0->mdscr = 0x09408038;
+	mmdc_p0->mdscr = 0x04008040;
+	mmdc_p0->mdscr = 0x04008048;
+	mmdc_p0->mdref = 0x00007800;
+	mmdc_p0->mpodtctrl = 0x00022227;
+	mmdc_p1->mpodtctrl = 0x00022227;
+	mmdc_p0->mdpdc = 0x000255F6;
+	mmdc_p0->mapsr = 0x00001006;
+	mmdc_p0->mdscr = 0x00000000;
 	udelay(100);
 }
 
