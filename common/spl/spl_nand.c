@@ -35,8 +35,9 @@ static int spl_nand_load_element(int offset, struct image_header *header)
 				   (void *)spl_image.load_addr);
 }
 
-void spl_nand_load_image(void)
+int spl_nand_load_image(void)
 {
+	int err;
 	struct image_header *header;
 	int *src __attribute__((unused));
 	int *dst __attribute__((unused));
@@ -73,10 +74,12 @@ void spl_nand_load_image(void)
 		spl_parse_image_header(header);
 		if (header->ih_os == IH_OS_LINUX) {
 			/* happy - was a linux */
-			nand_spl_load_image(CONFIG_SYS_NAND_SPL_KERNEL_OFFS,
-				spl_image.size, (void *)spl_image.load_addr);
+			err = nand_spl_load_image(
+				CONFIG_SYS_NAND_SPL_KERNEL_OFFS,
+				spl_image.size,
+				(void *)spl_image.load_addr);
 			nand_deselect();
-			return;
+			return err;
 		} else {
 			puts("The Expected Linux image was not "
 				"found. Please check your NAND "
@@ -92,7 +95,8 @@ void spl_nand_load_image(void)
 #endif
 #endif
 	/* Load u-boot */
-	spl_nand_load_element(CONFIG_SYS_NAND_U_BOOT_OFFS, header);
+	err = spl_nand_load_element(CONFIG_SYS_NAND_U_BOOT_OFFS, header);
 	nand_deselect();
+	return err;
 }
 #endif

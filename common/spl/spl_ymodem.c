@@ -23,7 +23,7 @@ static int getcymodem(void) {
 	return -1;
 }
 
-void spl_ymodem_load_image(void)
+int spl_ymodem_load_image(void)
 {
 	int size = 0;
 	int err;
@@ -47,13 +47,14 @@ void spl_ymodem_load_image(void)
 			addr += res;
 			memcpy((char *)(store_addr), buf, res);
 		}
+
+		printf("Loaded %d bytes\n", size);
 	} else {
 		printf("spl: ymodem err - %s\n", xyzModem_error(err));
-		hang();
 	}
 
 	xyzModem_stream_close(&err);
 	xyzModem_stream_terminate(false, &getcymodem);
 
-	printf("Loaded %d bytes\n", size);
+	return ret;
 }
