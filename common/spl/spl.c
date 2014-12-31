@@ -150,6 +150,82 @@ static int spl_ram_load_image(void)
 }
 #endif
 
+#ifdef CONFIG_SPL_LIBCOMMON_SUPPORT
+static void announce_boot_device(u32 boot_device)
+{
+	puts("Trying to boot from ");
+	switch (boot_device) {
+#ifdef CONFIG_SPL_RAM_DEVICE
+	case BOOT_DEVICE_RAM:
+		puts("RAM");
+		break;
+#endif
+#ifdef CONFIG_SPL_MMC_SUPPORT
+	case BOOT_DEVICE_MMC1:
+	case BOOT_DEVICE_MMC2:
+	case BOOT_DEVICE_MMC2_2:
+		puts("MMC");
+		break;
+#endif
+#ifdef CONFIG_SPL_NAND_SUPPORT
+	case BOOT_DEVICE_NAND:
+		puts("NAND");
+		break;
+#endif
+#ifdef CONFIG_SPL_ONENAND_SUPPORT
+	case BOOT_DEVICE_ONENAND:
+		puts("OneNAND");
+		break;
+#endif
+#ifdef CONFIG_SPL_NOR_SUPPORT
+	case BOOT_DEVICE_NOR:
+		puts("NOR");
+		break;
+#endif
+#ifdef CONFIG_SPL_YMODEM_SUPPORT
+	case BOOT_DEVICE_UART:
+		puts("UART");
+		break;
+#endif
+#ifdef CONFIG_SPL_SPI_SUPPORT
+	case BOOT_DEVICE_SPI:
+		puts("SPI");
+		break;
+#endif
+#ifdef CONFIG_SPL_ETH_SUPPORT
+	case BOOT_DEVICE_CPGMAC:
+#ifdef CONFIG_SPL_ETH_DEVICE
+		puts("eth device");
+#else
+		puts("net");
+#endif
+		break;
+#endif
+#ifdef CONFIG_SPL_USBETH_SUPPORT
+	case BOOT_DEVICE_USBETH:
+		puts("USB eth");
+		break;
+#endif
+#ifdef CONFIG_SPL_USB_SUPPORT
+	case BOOT_DEVICE_USB:
+		puts("USB");
+		break;
+#endif
+#ifdef CONFIG_SPL_SATA_SUPPORT
+	case BOOT_DEVICE_SATA:
+		puts("SATA");
+		break;
+#endif
+	default:
+		printf("%d (unknown boot device)", boot_device);
+	}
+
+	puts("\n");
+}
+#else
+static void announce_boot_device(u32 boot_device) { }
+#endif
+
 #ifndef BOOT_DEVICE_NONE
 #define BOOT_DEVICE_NONE 0
 #endif
@@ -277,6 +353,7 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 
 	board_boot_order(spl_boot_list);
 	for (i = 0; i < ARRAY_SIZE(spl_boot_list); i++) {
+		announce_boot_device(spl_boot_list[i]);
 		if (!spl_load_image(spl_boot_list[i]))
 			break;
 	}
