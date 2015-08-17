@@ -13,6 +13,7 @@
 #include <spi_flash.h>
 #include <spi.h>
 #include <usb.h>
+#include <sata.h>
 #include <bmp_layout.h>
 #include <fs.h>
 
@@ -116,6 +117,9 @@ static int splash_select_fs_dev(struct splash_location *location)
 	case SPLASH_STORAGE_USB:
 		res = fs_set_blk_dev("usb", location->devpart, FS_TYPE_ANY);
 		break;
+	case SPLASH_STORAGE_SATA:
+		res = fs_set_blk_dev("sata", location->devpart, FS_TYPE_ANY);
+		break;
 	default:
 		printf("Error: unsupported location storage.\n");
 		return -ENODEV;
@@ -137,6 +141,11 @@ static int splash_load_fs(struct splash_location *location, u32 bmp_load_addr)
 		usb_init();
 		usb_stor_scan(1);
 	}
+#endif
+
+#ifdef CONFIG_CMD_SATA
+	if (location->storage == SPLASH_STORAGE_SATA)
+		sata_initialize();
 #endif
 
 	res = splash_select_fs_dev(location);
