@@ -12,7 +12,7 @@
 #include <asm/imx-common/mxc_i2c.h>
 #include <watchdog.h>
 
-int force_idle_bus(void *priv)
+static int force_idle_bus(void *priv)
 {
 	int i;
 	int sda, scl;
@@ -99,9 +99,8 @@ int setup_i2c(unsigned i2c_index, int speed, int slave_addr,
 	if (ret)
 		goto err_idle;
 
-#ifndef CONFIG_DM_I2C
-	bus_i2c_init(i2c_index, speed, slave_addr, force_idle_bus, p);
-#endif
+	bus_i2c_init(i2c_bases[i2c_index], speed, slave_addr,
+			force_idle_bus, p);
 
 	return 0;
 
