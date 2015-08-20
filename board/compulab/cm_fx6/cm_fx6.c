@@ -582,6 +582,10 @@ int cm_fx6_setup_ecspi(void) { return 0; }
 #ifdef CONFIG_OF_BOARD_SETUP
 int ft_board_setup(void *blob, bd_t *bd)
 {
+	u32 baseboard_rev;
+	int nodeoffset;
+	const char *usdhc3_path = "/soc/aips-bus@02100000/usdhc@02198000/";
+	char *baseboard_name;
 	uint8_t enetaddr[6];
 
 	/* MAC addr */
@@ -594,6 +598,18 @@ int ft_board_setup(void *blob, bd_t *bd)
 	if (eth_getenv_enetaddr("eth1addr", enetaddr)) {
 		fdt_find_and_setprop(blob, "/eth@pcie", "local-mac-address",
 				     enetaddr, 6, 1);
+	}
+
+	baseboard_name = cl_eeprom_get_product_name(0);
+	baseboard_rev = cl_eeprom_get_board_rev(0);
+	if (!strncmp("SB-FX6m", baseboard_name, 7) && baseboard_rev <= 120) {
+		fdt_shrink_to_minimum(blob); /* Make room for new properties */
+		nodeoffset = fdt_path_offset(blob, usdhc3_path);
+		fdt_delprop(blob, nodeoffset, "cd-gpios");
+		fdt_find_and_setprop(blob, usdhc3_path, "non-removable",
+				     NULL, 0, 1);
+		fdt_find_and_setprop(blob, usdhc3_path, "keep-power-in-suspend",
+				     NULL, 0, 1);
 	}
 
 	return 0;
