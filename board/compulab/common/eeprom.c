@@ -25,6 +25,8 @@
 #define BOARD_REV_OFFSET		0
 #define BOARD_REV_OFFSET_LEGACY		6
 #define BOARD_REV_SIZE			2
+#define BOARD_PRODUCT_NAME_OFFSET	128
+#define BOARD_PRODUCT_NAME_SIZE		16
 #define MAC_ADDR_OFFSET			4
 #define MAC_ADDR_OFFSET_LEGACY		0
 
@@ -149,3 +151,20 @@ u32 cl_eeprom_get_board_rev(uint eeprom_bus)
 
 	return board_rev;
 };
+
+static char product_name[BOARD_PRODUCT_NAME_SIZE];
+char *cl_eeprom_get_product_name(uint eeprom_bus)
+{
+	if (cl_eeprom_setup(eeprom_bus))
+		return NULL;
+
+	if (cl_eeprom_read(BOARD_PRODUCT_NAME_OFFSET,
+			   (uchar *)product_name, BOARD_PRODUCT_NAME_SIZE)) {
+		return NULL;
+	}
+
+	/* Protect ourselves from invalid data (unterminated string) */
+	product_name[BOARD_PRODUCT_NAME_SIZE - 1] = '\0';
+
+	return product_name;
+}
