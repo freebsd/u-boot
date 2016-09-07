@@ -186,14 +186,35 @@
  * FreeBSD customizations from here down.
  ****************************************************************************/
 
+<<<<<<< HEAD
+/* Add the API and ELF features needed for ubldr. */
+#ifndef CONFIG_SPL_BUILD
 #define CONFIG_API
 #define CONFIG_EFI_PARTITION
 #define CONFIG_PREBOOT
+#endif
 
-#define CONFIG_SYS_MMC_MAX_DEVICE 1
+#ifndef CONFIG_SPL_BUILD
+#define CONFIG_SYS_MMC_MAX_DEVICE	1
+#endif
+
+/* Turn off dcache. -- only rpi2 */
+#ifndef CONFIG_SPL_BUILD
+#define CONFIG_SYS_DCACHE_OFF
+#define CONFIG_CMD_CACHE
+#endif
 
 /* Create a small(ish) boot environment for FreeBSD. */
+#ifndef CONFIG_SPL_BUILD
 #undef  CONFIG_EXTRA_ENV_SETTINGS
+#if 0 /* rpi2 -- ENV_MEM_LAYOUT_SETTINGS ? */
+	"loadaddr=0x02000000\0" \
+	"scriptaddr=0x00000000\0" \
+	"pxefile_addr_r=0x00100000\0" \
+	"kernel_addr_r=0x01000000\0" \
+	"ramdisk_addr_r=0x02100000\0" \
+	/* std{in,out,err} still needed ??? not in rpi2 */
+#endif
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	ENV_MEM_LAYOUT_SETTINGS \
 	"stdin=serial,lcd\0" \
@@ -206,6 +227,12 @@
 	  "test ${loaderdev} = net && env exists SetupNetconfig && run SetupNetconfig; " \
 	  "echo Booting from: ${fatdev} ${bootfile}; " \
 	  "fatload ${fatdev} ${loadaddr} ${bootfile} && bootelf || go ${loadaddr}; " \
+	"\0" \
+	"Netboot=" \
+	  "env exists ethact || usb start; " \
+	  "env exists loaderdev || env set loaderdev net; " \
+	  "env exists UserNetboot && run UserNetboot; " \
+	  "dhcp ${loadaddr} ${bootfile} && bootelf ${loadaddr}; " \
 	"\0" \
 	"Preboot=" \
 	  "fdt addr 0x100; " \
@@ -232,5 +259,6 @@
 #define CONFIG_PREBOOT		"run Preboot"
 
 #define CONFIG_CMD_CACHE
+#endif
 
 #endif
