@@ -1659,6 +1659,7 @@ int mmc_start_init(struct mmc *mmc)
 			if (mmc_error_print_max < 4) {
 				mmc_error_print_max++;
 				printf("Card did not respond to voltage select!\n");
+
 				if (mmc_error_print_max == 4) {
 					printf("Discarding further error messages\n");
 				}

@@ -113,8 +113,13 @@ static unsigned long do_bootelf_exec(ulong (*entry)(int, char * const[]),
 	 * FreeBSD wants the caches enabled while ubldr runs, and as of r276397
 	 * the kernel can tolerate being entered with internal (but not external
 	 * PL310) caches enabled on armv6/7 systems.  So don't disable caches
-	 * here, just launch the program directly.
+	 * here, just invalidate the icache (because we DMA'd new data into that
+	 * memory recently) (if applicable) and launch the program directly.
 	 */
+#if 0 /* Only on rpi? */
+	flush_dcache_all();
+	invalidate_icache_all();
+#endif
 	ret = entry(argc, argv);
 	return ret;
 }

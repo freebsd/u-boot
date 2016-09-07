@@ -290,6 +290,14 @@ static int API_dev_close(va_list ap)
 	if (!err)
 		di->state = DEV_STA_CLOSED;
 
+	/*
+	 * FreeBSD loader(8) just loaded code to some random location that may
+	 * contain stale icache entries.  Now that the device is closed it's
+	 * about to run that code, so clean the caches.
+	 */
+	flush_dcache_all();
+	invalidate_icache_all();
+
 	return err;
 }
 
