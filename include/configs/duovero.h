@@ -60,12 +60,12 @@
 /* Add the API and ELF features needed for ubldr. */
 #ifndef CONFIG_SPL_BUILD
 #define CONFIG_API
-#define CONFIG_CMD_ELF
-#define CONFIG_CMD_ENV_EXISTS
+#define CONFIG_CMD_ELF 1
+#define CONFIG_CMD_ENV_EXISTS 1
 #define CONFIG_EFI_PARTITION
 #define CONFIG_SYS_MMC_MAX_DEVICE 2
 #ifndef CONFIG_SYS_DCACHE_OFF
-#define CONFIG_CMD_CACHE
+#define CONFIG_CMD_CACHE 1
 #endif
 #endif
 
