@@ -154,6 +154,36 @@
 #define SCAN_DEV_FOR_EFI
 #endif
 
+#ifdef CONFIG_DISTRO_FREEBSD
+#define BOOTENV_SHARED_FREEBSD                                            \
+	"boot_freebsd_binary="                                            \
+		"load ${devtype} ${devnum}:${distro_bootpart} "           \
+			"${kernel_addr_r} ubldr.bin; "                    \
+		"go ${kernel_addr_r}\0"                                   \
+	\
+	"boot_freebsd_elf="                                               \
+		"load ${devtype} ${devnum}:${distro_bootpart} "           \
+			"${kernel_addr_r} ubldr; "                        \
+		"bootelf ${kernel_addr_r}\0"                              \
+	\
+	"scan_dev_for_freebsd="                                           \
+		"if test -e ${devtype} ${devnum}:${distro_bootpart} "     \
+					"ubldr.bin; then "                \
+				"echo Found FreeBSD U-Boot Loader (bin);" \
+				"run boot_freebsd_binary; "               \
+				"echo FREEBSD FAILED: continuing...; "    \
+		"elif test -e ${devtype} ${devnum}:${distro_bootpart} "   \
+					"ubldr; then "                    \
+				"echo Found FreeBSD U-Boot Loader (elf);" \
+				"run boot_freebsd_elf; "                  \
+				"echo FREEBSD FAILED: continuing...; "    \
+		"fi;\0"
+#define SCAN_DEV_FOR_FREEBSD "run scan_dev_for_freebsd;"
+#else
+#define BOOTENV_SHARED_FREEBSD
+#define SCAN_DEV_FOR_FREEBSD
+#endif
+
 #ifdef CONFIG_SATA
 #define BOOTENV_SHARED_SATA	BOOTENV_SHARED_BLKDEV(sata)
 #define BOOTENV_DEV_SATA	BOOTENV_DEV_BLKDEV
@@ -327,6 +357,7 @@
 	BOOTENV_SHARED_IDE \
 	BOOTENV_SHARED_UBIFS \
 	BOOTENV_SHARED_EFI \
+	BOOTENV_SHARED_FREEBSD \
 	"boot_prefixes=/ /boot/\0" \
 	"boot_scripts=boot.scr.uimg boot.scr\0" \
 	"boot_script_dhcp=boot.scr.uimg\0" \
@@ -370,6 +401,7 @@
 			"run scan_dev_for_scripts; "                      \
 		"done;"                                                   \
 		SCAN_DEV_FOR_EFI                                          \
+		SCAN_DEV_FOR_FREEBSD                                      \
 		"\0"                                                      \
 	\
 	"scan_dev_for_boot_part="                                         \
