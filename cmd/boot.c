@@ -19,6 +19,7 @@ __attribute__((weak))
 unsigned long do_go_exec(ulong (*entry)(int, char * const []), int argc,
 				 char * const argv[])
 {
+
 	return entry (argc, argv);
 }
 

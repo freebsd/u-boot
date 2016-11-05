@@ -109,6 +109,7 @@ static unsigned long do_bootelf_exec(ulong (*entry)(int, char * const[]),
 {
 	unsigned long ret;
 
+#ifndef CONFIG_FREEBSD
 	/*
 	 * QNX images require the data cache is disabled.
 	 * Data cache is already flushed, so just turn it off.
@@ -116,6 +117,7 @@ static unsigned long do_bootelf_exec(ulong (*entry)(int, char * const[]),
 	int dcache = dcache_status();
 	if (dcache)
 		dcache_disable();
+#endif
 
 	/*
 	 * pass address parameter as argv[0] (aka command name),
@@ -123,8 +125,10 @@ static unsigned long do_bootelf_exec(ulong (*entry)(int, char * const[]),
 	 */
 	ret = entry(argc, argv);
 
+#ifndef CONFIG_FREEBSD
 	if (dcache)
 		dcache_enable();
+#endif
 
 	return ret;
 }
