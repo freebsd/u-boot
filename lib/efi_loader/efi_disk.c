@@ -197,11 +197,13 @@ static void efi_disk_add_dev(const char *name,
 			     const char *if_typename,
 			     const struct blk_desc *desc,
 			     int dev_index,
-			     lbaint_t offset)
+			     disk_partition_t *info,
+			     int logical_partition)
 {
 	struct efi_disk_obj *diskobj;
 	struct efi_device_path_file_path *dp;
 	int objlen = sizeof(*diskobj) + (sizeof(*dp) * 2);
+	static int mediaid;
 
 	/* Don't add empty devices */
 	if (!desc->lba)
@@ -218,16 +220,26 @@ static void efi_disk_add_dev(const char *name,
 	diskobj->ops = block_io_disk_template;
 	diskobj->ifname = if_typename;
 	diskobj->dev_index = dev_index;
-	diskobj->offset = offset;
+	if (info)
+		diskobj->offset = info->start;
+
 	diskobj->desc = desc;
 
 	/* Fill in EFI IO Media info (for read/write callbacks) */
 	diskobj->media.removable_media = desc->removable;
 	diskobj->media.media_present = 1;
-	diskobj->media.block_size = desc->blksz;
-	diskobj->media.io_align = desc->blksz;
-	diskobj->media.last_block = desc->lba - offset;
+	diskobj->media.media_id = mediaid++;
 	diskobj->ops.media = &diskobj->media;
+	if (logical_partition) {
+		diskobj->media.logical_partition = 1;
+		diskobj->media.block_size = info->blksz;
+		diskobj->media.io_align = info->blksz;
+		diskobj->media.last_block = info->size - 1;
+	} else {
+		diskobj->media.block_size = desc->blksz;
+		diskobj->media.io_align = desc->blksz;
+		diskobj->media.last_block = desc->lba;
+	}
 
 	/* Fill in device path */
 	dp = (void*)&diskobj[1];
@@ -262,8 +274,33 @@ static int efi_disk_create_eltorito(struct blk_desc *desc,
 	while (!part_get_info(desc, part, &info)) {
 		snprintf(devname, sizeof(devname), "%s:%d", pdevname,
 			 part);
-		efi_disk_add_dev(devname, if_typename, desc, diskid,
-				 info.start);
+		efi_disk_add_dev(devname, if_typename, desc, diskid, 0, 0);
+		part++;
+		disks++;
+	}
+#endif
+
+	return disks;
+}
+
+static int efi_disk_create_mbr(struct blk_desc *desc,
+				    const char *if_typename,
+				    int diskid)
+{
+	int disks = 0;
+#if CONFIG_IS_ENABLED(DOS_PARTITION)
+	char devname[32] = { 0 }; /* dp->str is u16[32] long */
+	disk_partition_t info;
+	int part = 1;
+
+	if (desc->part_type != PART_TYPE_DOS)
+		return 0;
+
+	while (!part_get_info(desc, part, &info)) {
+		snprintf(devname, sizeof(devname), "%s%d:%d", if_typename,
+			 diskid, part);
+
+		efi_disk_add_dev(devname, if_typename, desc, diskid, &info, 1);
 		part++;
 		disks++;
 	}
@@ -296,9 +333,11 @@ int efi_disk_register(void)
 		const char *if_typename = dev->driver->name;
 
 		printf("Scanning disk %s...\n", dev->name);
-		efi_disk_add_dev(dev->name, if_typename, desc, desc->devnum, 0);
+		efi_disk_add_dev(dev->name, if_typename, desc, desc->devnum,
+				 NULL, 0);
 		disks++;
 
+		disks += efi_disk_create_mbr(desc, if_typename, desc->devnum);
 		/*
 		* El Torito images show up as block devices in an EFI world,
 		* so let's create them here
@@ -332,15 +371,17 @@ int efi_disk_register(void)
 
 			snprintf(devname, sizeof(devname), "%s%d",
 				 if_typename, i);
-			efi_disk_add_dev(devname, if_typename, desc, i, 0);
+			efi_disk_add_dev(devname, if_typename, desc, i, 0, 0);
 			disks++;
 
+			disks += efi_disk_create_mbr(desc, if_typename, i);
 			/*
 			 * El Torito images show up as block devices
 			 * in an EFI world, so let's create them here
 			 */
 			disks += efi_disk_create_eltorito(desc, if_typename,
 							  i, devname);
+
 		}
 	}
 #endif
