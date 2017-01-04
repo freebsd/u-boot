@@ -290,6 +290,11 @@ static int API_dev_close(va_list ap)
 	if (!err)
 		di->state = DEV_STA_CLOSED;
 
+#ifdef CONFIG_FREEBSD
+	flush_dcache_all();
+	invalidate_icache_all();
+#endif
+
 	return err;
 }
 
