@@ -393,7 +393,7 @@ config FREEBSD
 	bool "Enable FreeBSD boot"
 	select API
 	select CMD_CACHE
-	default n
+	default y
 	help
 	  This option adds boot configuration that can run the FreeBSD
 	  loader.
