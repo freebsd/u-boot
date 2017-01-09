@@ -54,6 +54,9 @@ void dev_stor_init(void)
 	specs[ENUM_IDE].name = "ide";
 #endif
 #if defined(CONFIG_CMD_MMC)
+#ifndef CONFIG_SYS_MMC_MAX_DEVICE
+#define CONFIG_SYS_MMC_MAX_DEVICE 1
+#endif
 	specs[ENUM_MMC].max_dev = CONFIG_SYS_MMC_MAX_DEVICE;
 	specs[ENUM_MMC].enum_started = 0;
 	specs[ENUM_MMC].enum_ended = 0;
