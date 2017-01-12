@@ -5,6 +5,8 @@
 # SPDX-License-Identifier:	GPL-2.0+
 #
 
+swig=swig30
+
 # Enable all the config-independent tools
 ifneq ($(HOST_TOOLS_ALL),)
 CONFIG_LCD_LOGO = y
@@ -112,7 +114,7 @@ fit_check_sign-objs   := $(dumpimage-mkimage-objs) fit_check_sign.o
 # Build a libfdt Python module if swig is available
 # Use 'sudo apt-get install swig libpython-dev' to enable this
 hostprogs-y += \
-	$(if $(shell which swig 2> /dev/null),_libfdt.so)
+	$(if $(shell which $(swig) 2> /dev/null),_libfdt.so)
 _libfdt.so-sharedobjs += $(LIBFDT_OBJS)
 libfdt:
 
@@ -121,7 +123,7 @@ tools/_libfdt.so: $(patsubst %.o,%.c,$(LIBFDT_OBJS)) tools/libfdt_wrap.c
 	mv _libfdt.so $@
 
 tools/libfdt_wrap.c: $(srctree)/lib/libfdt/libfdt.swig
-	swig -python -o $@ $<
+	$(swig) -python -o $@ $<
 
 # TODO(sjg@chromium.org): Is this correct on Mac OS?
 
