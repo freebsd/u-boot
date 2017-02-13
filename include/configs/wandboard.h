@@ -39,9 +39,6 @@
 #define CONFIG_CONS_INDEX		1
 #define CONFIG_BAUDRATE			115200
 
-/* Command definition */
-#include <config_cmd_default.h>
-
 #define CONFIG_CMD_SATA
 #ifdef CONFIG_CMD_SATA
 #define CONFIG_DWC_AHSATA
@@ -54,9 +51,6 @@
 
 /* Command definition */
 #define CONFIG_CMD_BMODE
-#define CONFIG_CMD_SETEXPR
-
-#define CONFIG_BOOTDELAY		1
 
 #define CONFIG_SYS_MEMTEST_START	0x10000000
 #define CONFIG_SYS_MEMTEST_END		(CONFIG_SYS_MEMTEST_START + 500 * SZ_1M)
@@ -138,14 +132,16 @@
 			"fi; "	\
 		"fi\0" \
 	"findfdt="\
+		"if test $board_name = D1 && test $board_rev = MX6QP ; then " \
+			"setenv fdtfile imx6qp-wandboard-revd1.dtb; fi; " \
 		"if test $board_name = D1 && test $board_rev = MX6Q ; then " \
 			"setenv fdtfile imx6q-wandboard-revd1.dtb; fi; " \
 		"if test $board_name = D1 && test $board_rev = MX6DL ; then " \
 			"setenv fdtfile imx6dl-wandboard-revd1.dtb; fi; " \
 		"if test $board_name = C1 && test $board_rev = MX6Q ; then " \
-			"setenv fdtfile imx6q-wandboard.dtb; fi; " \
+			"setenv fdtfile imx6q-wandboard-revc1.dtb; fi; " \
 		"if test $board_name = C1 && test $board_rev = MX6DL ; then " \
-			"setenv fdtfile imx6dl-wandboard.dtb; fi; " \
+			"setenv fdtfile imx6dl-wandboard-revc1.dtb; fi; " \
 		"if test $board_name = B1 && test $board_rev = MX6Q ; then " \
 			"setenv fdtfile imx6q-wandboard-revb1.dtb; fi; " \
 		"if test $board_name = B1 && test $board_rev = MX6DL ; then " \

@@ -53,6 +53,7 @@ DECLARE_GLOBAL_DATA_PTR;
 #define USDHC1_CD_GPIO		IMX_GPIO_NR(1, 2)
 #define USDHC3_CD_GPIO		IMX_GPIO_NR(3, 9)
 #define ETH_PHY_RESET		IMX_GPIO_NR(3, 29)
+#define ETH_PHY_AR8035_POWER	IMX_GPIO_NR(7, 13)
 #define REV_DETECTION		IMX_GPIO_NR(2, 28)
 
 static bool with_pmic = false;
@@ -107,8 +108,13 @@ static iomux_v3_cfg_t const enet_pads[] = {
 	IOMUX_PADS(PAD_RGMII_RD2__RGMII_RD2  | MUX_PAD_CTRL(ENET_PAD_CTRL)),
 	IOMUX_PADS(PAD_RGMII_RD3__RGMII_RD3  | MUX_PAD_CTRL(ENET_PAD_CTRL)),
 	IOMUX_PADS(PAD_RGMII_RX_CTL__RGMII_RX_CTL | MUX_PAD_CTRL(ENET_PAD_CTRL)),
-	/* AR8031 PHY Reset */
+	/* AR8031/AR8035 PHY Reset */
 	IOMUX_PADS(PAD_EIM_D29__GPIO3_IO29    | MUX_PAD_CTRL(NO_PAD_CTRL)),
+};
+
+static iomux_v3_cfg_t const enet_ar8035_power_pads[] = {
+	/* AR8035 POWER */
+	IOMUX_PADS(PAD_GPIO_18__GPIO7_IO13    | MUX_PAD_CTRL(NO_PAD_CTRL)),
 };
 
 static iomux_v3_cfg_t const rev_detection_pad[] = {
@@ -124,6 +130,13 @@ static void setup_iomux_enet(void)
 {
 	SETUP_IOMUX_PADS(enet_pads);
 
+	if (with_pmic) {
+		SETUP_IOMUX_PADS(enet_ar8035_power_pads);
+		/* enable AR8035 POWER */
+		gpio_direction_output(ETH_PHY_AR8035_POWER, 0);
+	}
+	/* wait until 3.3V of PHY and clock become stable */
+	mdelay(10);
 	/* Reset AR8031/AR8035 PHY */
 	gpio_direction_output(ETH_PHY_RESET, 0);
 	mdelay(10);
@@ -589,7 +602,6 @@ int board_init(void)
 	gd->bd->bi_boot_params = PHYS_SDRAM + 0x100;
 
 	setup_iomux_i2c();
-#endif
 
 	return 0;
 }
