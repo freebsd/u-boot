@@ -63,7 +63,7 @@ while true; do
 		;;
 	"-O")
 		if [ -d $2 ];then
-			OUTPUT=$(echo $2 | sed 's/\/*$//')
+			OUTPUT=$(echo $2 | gsed 's/\/*$//')
 		else
 			echo "output directory $2 does not exist" 1>&2
 			exit 1
@@ -112,7 +112,7 @@ for MERGE_FILE in $MERGE_LIST ; do
 		echo "The merge file '$MERGE_FILE' does not exist.  Exit." >&2
 		exit 1
 	fi
-	CFG_LIST=$(sed -n "$SED_CONFIG_EXP" $MERGE_FILE)
+	CFG_LIST=$(gsed -n "$SED_CONFIG_EXP" $MERGE_FILE)
 
 	for CFG in $CFG_LIST ; do
 		grep -q -w $CFG $TMP_FILE || continue
@@ -126,7 +126,7 @@ for MERGE_FILE in $MERGE_LIST ; do
 		elif [ "$WARNREDUN" = "true" ]; then
 			echo Value of $CFG is redundant by fragment $MERGE_FILE:
 		fi
-		sed -i "/$CFG[ =]/d" $TMP_FILE
+		gsed -i "/$CFG[ =]/d" $TMP_FILE
 	done
 	cat $MERGE_FILE >> $TMP_FILE
 done
@@ -151,11 +151,11 @@ fi
 # Use the merged file as the starting point for:
 # alldefconfig: Fills in any missing symbols with Kconfig default
 # allnoconfig: Fills in any missing symbols with # CONFIG_* is not set
-make KCONFIG_ALLCONFIG=$TMP_FILE $OUTPUT_ARG $ALLTARGET
+gmake KCONFIG_ALLCONFIG=$TMP_FILE $OUTPUT_ARG $ALLTARGET
 
 
 # Check all specified config values took (might have missed-dependency issues)
-for CFG in $(sed -n "$SED_CONFIG_EXP" $TMP_FILE); do
+for CFG in $(gsed -n "$SED_CONFIG_EXP" $TMP_FILE); do
 
 	REQUESTED_VAL=$(grep -w -e "$CFG" $TMP_FILE)
 	ACTUAL_VAL=$(grep -w -e "$CFG" "$KCONFIG_CONFIG")
