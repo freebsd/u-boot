@@ -17,6 +17,14 @@
 #define MACH_TYPE_WANDBOARD		4412
 #define CONFIG_MACH_TYPE		MACH_TYPE_WANDBOARD
 
+#define CONFIG_CMDLINE_TAG
+#define CONFIG_SETUP_MEMORY_TAGS
+#define CONFIG_INITRD_TAG
+#define CONFIG_REVISION_TAG
+
+#define CONFIG_SYS_GENERIC_BOARD
+#undef CONFIG_LDO_BYPASS_CHECK
+
 /* Size of malloc() pool */
 #define CONFIG_SYS_MALLOC_LEN		(10 * SZ_1M)
 
@@ -27,6 +35,9 @@
 #define CONFIG_MXC_UART_BASE		UART1_BASE
 
 /* SATA Configs */
+#define CONFIG_ENV_OVERWRITE
+#define CONFIG_CONS_INDEX		1
+#define CONFIG_BAUDRATE			115200
 
 #define CONFIG_CMD_SATA
 #ifdef CONFIG_CMD_SATA
@@ -51,6 +62,13 @@
 #define CONFIG_SYS_I2C_MXC_I2C2		/* enable I2C bus 2 */
 #define CONFIG_SYS_I2C_MXC_I2C3		/* enable I2C bus 3 */
 #define CONFIG_SYS_I2C_SPEED		100000
+#define CONFIG_I2C_PMIC			2
+
+/* PMIC */
+#define CONFIG_POWER
+#define CONFIG_POWER_I2C
+#define CONFIG_POWER_PFUZE100
+#define CONFIG_POWER_PFUZE100_I2C_ADDR	0x08
 
 /* MMC Configuration */
 #define CONFIG_SYS_FSL_USDHC_NUM	2
@@ -114,10 +132,16 @@
 			"fi; "	\
 		"fi\0" \
 	"findfdt="\
+		"if test $board_name = D1 && test $board_rev = MX6QP ; then " \
+			"setenv fdtfile imx6qp-wandboard-revd1.dtb; fi; " \
+		"if test $board_name = D1 && test $board_rev = MX6Q ; then " \
+			"setenv fdtfile imx6q-wandboard-revd1.dtb; fi; " \
+		"if test $board_name = D1 && test $board_rev = MX6DL ; then " \
+			"setenv fdtfile imx6dl-wandboard-revd1.dtb; fi; " \
 		"if test $board_name = C1 && test $board_rev = MX6Q ; then " \
-			"setenv fdtfile imx6q-wandboard.dtb; fi; " \
+			"setenv fdtfile imx6q-wandboard-revc1.dtb; fi; " \
 		"if test $board_name = C1 && test $board_rev = MX6DL ; then " \
-			"setenv fdtfile imx6dl-wandboard.dtb; fi; " \
+			"setenv fdtfile imx6dl-wandboard-revc1.dtb; fi; " \
 		"if test $board_name = B1 && test $board_rev = MX6Q ; then " \
 			"setenv fdtfile imx6q-wandboard-revb1.dtb; fi; " \
 		"if test $board_name = B1 && test $board_rev = MX6DL ; then " \
@@ -156,6 +180,9 @@
 	(CONFIG_SYS_INIT_RAM_SIZE - GENERATED_GBL_DATA_SIZE)
 #define CONFIG_SYS_INIT_SP_ADDR \
 	(CONFIG_SYS_INIT_RAM_ADDR + CONFIG_SYS_INIT_SP_OFFSET)
+
+/* FLASH and environment organization */
+#define CONFIG_SYS_NO_FLASH
 
 /* Environment organization */
 #define CONFIG_ENV_SIZE			(8 * 1024)
