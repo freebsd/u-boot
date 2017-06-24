@@ -480,7 +480,7 @@ static efi_status_t EFIAPI efi_start_image(efi_handle_t image_handle,
 	EFI_ENTRY("%p, %p, %p", image_handle, exit_data_size, exit_data);
 	entry = info->reserved;
 
-	efi_is_direct_boot = false;
+	/* efi_is_direct_boot = false; */
 
 	/* call the image! */
 	if (setjmp(&info->exit_jmp)) {
