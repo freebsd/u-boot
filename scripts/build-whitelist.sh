@@ -38,7 +38,7 @@ git grep CONFIG_ | \
 
 # Finally, we need a list of the valid Kconfig options to exclude these from
 # the whitelist.
-cat `find . -name "Kconfig*"` |sed -n \
+cat `find . -name "Kconfig*"` |gsed -n \
 	-e 's/^\s*config *\([A-Za-z0-9_]*\).*$/CONFIG_\1/p' \
 	-e 's/^\s*menuconfig *\([A-Za-z0-9_]*\).*$/CONFIG_\1/p' \
 	|sort |uniq >scripts/config_whitelist.txt.tmp2
