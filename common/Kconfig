@@ -525,7 +525,7 @@ config DISTRO_FREEBSD
 	bool "Enable FreeBSD boot"
 	select API
 	select CMD_CACHE
-	default n
+	default y
 	help
 	  This options adds boot configuration that can run the FreeBSD
 	  loader. When enabled the distro_bootcmd will be expanded to
