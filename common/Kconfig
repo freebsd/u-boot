@@ -523,7 +523,7 @@ endmenu
 
 config DISTRO_FREEBSD
 	bool "Enable FreeBSD boot"
-	select API
+	select API if !ARM64
 	select CMD_CACHE
 	default y
 	help
