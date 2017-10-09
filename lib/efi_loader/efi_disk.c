@@ -286,6 +286,32 @@ static int efi_disk_create_mbr(struct blk_desc *desc,
 	return disks;
 }
 
+static int efi_disk_create_gpt(struct blk_desc *desc,
+				    const char *if_typename,
+				    int diskid)
+{
+	int disks = 0;
+#if CONFIG_IS_ENABLED(EFI_PARTITION)
+	char devname[32] = { 0 }; /* dp->str is u16[32] long */
+	disk_partition_t info;
+	int part = 1;
+
+	if (desc->part_type != PART_TYPE_EFI)
+		return 0;
+
+	while (!part_get_info(desc, part, &info)) {
+		snprintf(devname, sizeof(devname), "%s%d:%d", if_typename,
+			 diskid, part);
+
+		efi_disk_add_dev(devname, if_typename, desc, diskid, &info, 1);
+		part++;
+		disks++;
+	}
+#endif
+
+	return disks;
+}
+
 /*
  * U-Boot doesn't have a list of all online disk devices. So when running our
  * EFI payload, we scan through all of the potentially available ones and
@@ -315,6 +341,7 @@ int efi_disk_register(void)
 		disks++;
 
 		disks += efi_disk_create_mbr(desc, if_typename, desc->devnum);
+		disks += efi_disk_create_gpt(desc, if_typename, desc->devnum);
 		/*
 		* El Torito images show up as block devices in an EFI world,
 		* so let's create them here
@@ -352,6 +379,7 @@ int efi_disk_register(void)
 			disks++;
 
 			disks += efi_disk_create_mbr(desc, if_typename, i);
+			disks += efi_disk_create_gpt(desc, if_typename, i);
 			/*
 			 * El Torito images show up as block devices
 			 * in an EFI world, so let's create them here
